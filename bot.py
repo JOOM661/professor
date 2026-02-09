@@ -42,6 +42,7 @@ def home():
             <p><span class="status-dot"></span> Sistema Online</p>
             <div class="info">Curso Completo de Python<br>(50 Aulas Carregadas)</div>
             <p style="font-size: 0.8rem; color: #999; margin-top: 20px;">Bot rodando 24/7 via Threading</p>
+            <p style="font-size: 0.8rem; color: #999; margin-top: 20px;">Acesse o bot em: https://t.me/professorprogramacaobot</p>
         </div>
     </body>
     </html>
