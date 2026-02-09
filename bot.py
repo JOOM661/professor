@@ -1,174 +1,229 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-
-import telebot
 import os
 import json
-import time
-import subprocess
-import tempfile
-import sys
+import telebot
+from telebot import types
 
-# ================= CONFIG =================
-TOKEN = "8225873743:AAHyaQxuZWdFf094aNLW_4KPFqJn-gRnw9U"
-bot = telebot.TeleBot(TOKEN, parse_mode="Markdown")
+# Configuração do Token via variável de ambiente
+TOKEN = os.getenv('TELEGRAM_TOKEN')
+bot = telebot.TeleBot(TOKEN)
 
-PASTA_DADOS = "dados"
-PASTA_EXEC = "execucoes"
+# Nome da pasta onde os progressos serão salvos
+DATA_FOLDER = "user_data"
+if not os.path.exists(DATA_FOLDER):
+    os.makedirs(DATA_FOLDER)
 
-os.makedirs(PASTA_DADOS, exist_ok=True)
-os.makedirs(PASTA_EXEC, exist_ok=True)
-
-# ================= AULAS =================
-AULAS = {
-    1: {
-        "titulo": "🐍 Introdução ao Python",
-        "conteudo": (
-            "Python é uma linguagem simples e poderosa.\n\n"
-            "**Exemplo:**\n"
-            "```python\nprint('Olá, Mundo!')\n```"
-        ),
-        "exercicio": "Mostre seu nome usando print().",
-        "solucao": "print('Seu nome aqui')"
+# --- BANCO DE DADOS DE AULAS ---
+AULAS = [
+    {
+        "titulo": "01. O que é Programação?",
+        "conteudo": "Programar é dar instruções para o computador resolver problemas. É como escrever uma receita de bolo!",
+        "exemplo": "print('Olá Mundo!')",
+        "resumo": "Programar = Instruções."
     },
-    2: {
-        "titulo": "📊 Variáveis",
-        "conteudo": (
-            "Variáveis armazenam dados.\n\n"
-            "```python\nnome = 'Ana'\nidade = 20\nprint(nome, idade)\n```"
-        ),
-        "exercicio": "Crie nome e idade e mostre na tela.",
-        "solucao": "nome='João'; idade=18; print(nome, idade)"
+    {
+        "titulo": "02. Variáveis (Gavetas)",
+        "conteudo": "Variáveis guardam informações. Imagine que cada variável é uma gaveta com um nome.",
+        "exemplo": "nome = 'Alice'\nidade = 25",
+        "resumo": "Variáveis armazenam dados."
+    },
+    {
+        "titulo": "03. Números e Cálculos",
+        "conteudo": "O Python é ótimo com matemática. Você pode somar (+), subtrair (-), multiplicar (*) e dividir (/).",
+        "exemplo": "soma = 10 + 5",
+        "resumo": "Python funciona como uma calculadora poderosa."
+    },
+    {
+        "titulo": "04. Strings (Textos)",
+        "conteudo": "Textos no código são chamados de Strings e devem estar entre aspas.",
+        "exemplo": "frase = 'Eu amo programar!'",
+        "resumo": "Texto = String (sempre entre aspas)."
+    },
+    {
+        "titulo": "05. Listas",
+        "conteudo": "Listas servem para guardar vários itens em um só lugar, usando colchetes [ ].",
+        "exemplo": "compras = ['pão', 'leite', 'café']",
+        "resumo": "Listas organizam múltiplos dados."
+    },
+    {
+        "titulo": "06. Entrada de Dados",
+        "conteudo": "O comando input() serve para o computador perguntar algo ao usuário.",
+        "exemplo": "nome = input('Qual seu nome?')",
+        "resumo": "input() recebe o que o usuário digita."
+    },
+    {
+        "titulo": "07. Condicionais (Se/Então)",
+        "conteudo": "O 'if' serve para o computador tomar decisões baseadas em condições.",
+        "exemplo": "if idade >= 18:\n    print('Maior de idade')",
+        "resumo": "if testa se algo é verdadeiro."
+    },
+    {
+        "titulo": "08. O 'Else'",
+        "conteudo": "O 'else' é o caminho alternativo caso o 'if' não seja atendido.",
+        "exemplo": "if nota >= 6:\n    print('Passou')\nelse:\n    print('Recuperação')",
+        "resumo": "else = 'caso contrário'."
+    },
+    {
+        "titulo": "09. Operadores Lógicos",
+        "conteudo": "Usamos 'and' (e) e 'or' (ou) para combinar várias condições.",
+        "exemplo": "if sol == True and calor == True:\n    print('Praia!')",
+        "resumo": "and/or combinam testes lógicos."
+    },
+    {
+        "titulo": "10. Repetição (While)",
+        "conteudo": "O 'while' repete um bloco de código enquanto uma condição for verdadeira.",
+        "exemplo": "while energia > 0:\n    print('Correndo...')",
+        "resumo": "while = repetição por condição."
+    },
+    {
+        "titulo": "11. Repetição (For)",
+        "conteudo": "O 'for' é usado para percorrer itens de uma lista ou uma sequência.",
+        "exemplo": "for item in lista:\n    print(item)",
+        "resumo": "for = repetição por coleção."
+    },
+    {
+        "titulo": "12. Funções",
+        "conteudo": "Funções são blocos de código que você cria para usar várias vezes depois.",
+        "exemplo": "def saudar():\n    print('Olá!')",
+        "resumo": "def cria funções reutilizáveis."
+    },
+    {
+        "titulo": "13. Parâmetros",
+        "conteudo": "Funções podem receber valores para trabalhar, chamamos de parâmetros.",
+        "exemplo": "def soma(a, b):\n    return a + b",
+        "resumo": "Parâmetros são os dados que a função recebe."
+    },
+    {
+        "titulo": "14. Dicionários",
+        "conteudo": "Dicionários guardam dados com um sistema de 'Chave: Valor'.",
+        "exemplo": "carro = {'marca': 'Ford', 'ano': 2020}",
+        "resumo": "Dicionários ligam nomes a valores."
+    },
+    {
+        "titulo": "15. Erros e Exceções",
+        "conteudo": "Erros acontecem! Usamos try/except para capturar erros e não deixar o programa travar.",
+        "exemplo": "try:\n    print(10/0)\nexcept:\n    print('Erro detectado!')",
+        "resumo": "Tratamento de erros evita quedas."
+    },
+    {
+        "titulo": "16. Importando Módulos",
+        "conteudo": "Podemos usar códigos prontos de outros desenvolvedores usando 'import'.",
+        "exemplo": "import math\nprint(math.sqrt(16))",
+        "resumo": "import traz novas ferramentas."
+    },
+    {
+        "titulo": "17. Manipulação de Arquivos",
+        "conteudo": "Python pode ler e escrever arquivos de texto no seu computador.",
+        "exemplo": "open('texto.txt', 'w').write('Oi!')",
+        "resumo": "Python interage com o sistema de arquivos."
+    },
+    {
+        "titulo": "18. Comentários",
+        "conteudo": "Comentários são textos que o computador ignora, servem para explicar o código aos humanos.",
+        "exemplo": "# Isso é um comentário",
+        "resumo": "# ajuda a documentar o código."
+    },
+    {
+        "titulo": "19. Formatação de Strings",
+        "conteudo": "As f-strings facilitam colocar variáveis dentro de frases.",
+        "exemplo": "f'Olá, meu nome é {nome}'",
+        "resumo": "f-strings tornam o texto dinâmico."
+    },
+    {
+        "titulo": "20. Boas Práticas (Clean Code)",
+        "conteudo": "Escrever código limpo é essencial. Use nomes claros para variáveis e mantenha a organização.",
+        "exemplo": "nome_do_usuario = 'Joao' # Bom!",
+        "resumo": "Código limpo = fácil manutenção."
     }
-}
+]
 
-# ================= DESAFIOS =================
-DESAFIOS = {
-    1: {
-        "titulo": "🔢 Soma",
-        "descricao": "Some dois números.",
-        "dica": "Use o operador +",
-        "exemplo": "a=5\nb=3\nprint(a+b)"
-    }
-}
+# --- FUNÇÕES DE PERSISTÊNCIA ---
 
-# ================= PROGRESSO =================
-def caminho_progresso(uid):
-    return f"{PASTA_DADOS}/{uid}.json"
+def get_user_path(user_id):
+    return os.path.join(DATA_FOLDER, f"{user_id}.json")
 
-def carregar_progresso(uid):
-    if os.path.exists(caminho_progresso(uid)):
-        with open(caminho_progresso(uid), "r", encoding="utf-8") as f:
+def load_progress(user_id):
+    path = get_user_path(user_id)
+    if os.path.exists(path):
+        with open(path, 'r') as f:
             return json.load(f)
-    return {"aulas": [], "desafios": [], "pontos": 0}
+    return {"aula_atual": 0}
 
-def salvar_progresso(uid, dados):
-    with open(caminho_progresso(uid), "w", encoding="utf-8") as f:
-        json.dump(dados, f, indent=2)
+def save_progress(user_id, data):
+    path = get_user_path(user_id)
+    with open(path, 'w') as f:
+        json.dump(data, f)
 
-# ================= EXECUTOR =================
-def executar_codigo(codigo):
-    bloqueados = ["import os", "import sys", "subprocess", "open(", "exec(", "eval("]
-    for b in bloqueados:
-        if b in codigo.lower():
-            return False, f"Comando bloqueado: {b}"
+# --- COMANDOS DO BOT ---
 
-    with tempfile.NamedTemporaryFile("w", suffix=".py", delete=False) as f:
-        f.write(codigo)
-        nome = f.name
+@bot.message_handler(commands=['start'])
+def send_welcome(message):
+    user_id = str(message.from_user.id)
+    # Garante que os dados existem sem KeyErrors
+    progress = load_progress(user_id)
+    save_progress(user_id, progress)
 
-    try:
-        res = subprocess.run(
-            [sys.executable, nome],
-            capture_output=True,
-            text=True,
-            timeout=5
+    welcome_text = (
+        f"Olá, {message.from_user.first_name}! 📘✨\n\n"
+        "Eu sou seu Professor Virtual de Programação. "
+        "Estou aqui para te ensinar Python do zero, de um jeito simples e prático.\n\n"
+        "Use /menu para ver o que posso fazer!"
+    )
+    bot.reply_to(message, welcome_text)
+
+@bot.message_handler(commands=['menu'])
+def send_menu(message):
+    menu_text = (
+        "🎓 *Menu do Aluno:*\n\n"
+        "/aula - Ver minha aula atual\n"
+        "/proxima - Ir para o próximo tópico\n"
+        "/ajuda - Suporte do professor"
+    )
+    bot.reply_to(message, menu_text, parse_mode="Markdown")
+
+@bot.message_handler(commands=['aula'])
+def show_lesson(message):
+    user_id = str(message.from_user.id)
+    progress = load_progress(user_id)
+    idx = progress.get("aula_atual", 0)
+
+    if idx < len(AULAS):
+        aula = AULAS[idx]
+        texto_aula = (
+            f"📖 *{aula['titulo']}*\n\n"
+            f"{aula['conteudo']}\n\n"
+            f"💻 *Exemplo Prático:*\n`{aula['exemplo']}`\n\n"
+            f"📌 *Resumo:* {aula['resumo']}\n\n"
+            "Digite /proxima para continuar sua jornada! 🚀"
         )
-        return True, res.stdout or "Executado com sucesso!"
-    except subprocess.TimeoutExpired:
-        return False, "Tempo excedido (5s)"
-    finally:
-        os.remove(nome)
+        bot.reply_to(message, texto_aula, parse_mode="Markdown")
+    else:
+        bot.reply_to(message, "🎉 Parabéns! Você concluiu todas as aulas do curso básico!")
 
-# ================= COMANDOS =================
-@bot.message_handler(commands=["start"])
-def start(msg):
-    bot.send_message(
-        msg.chat.id,
-        "👋 Bem-vindo ao *Bot Professor de Python* 🐍\n\n"
-        "Comandos:\n"
-        "/aulas – Ver aulas\n"
-        "/aula 1 – Ver aula\n"
-        "/desafio – Ver desafios\n"
-        "/executar código – Executar Python\n"
-        "/progresso – Ver progresso"
-    )
+@bot.message_handler(commands=['proxima'])
+def next_lesson(message):
+    user_id = str(message.from_user.id)
+    progress = load_progress(user_id)
+    idx = progress.get("aula_atual", 0)
 
-@bot.message_handler(commands=["aulas"])
-def aulas(msg):
-    texto = "*📚 Aulas Disponíveis:*\n\n"
-    for n, a in AULAS.items():
-        texto += f"*{n}* - {a['titulo']}\n"
-    bot.send_message(msg.chat.id, texto)
+    if idx < len(AULAS) - 1:
+        progress["aula_atual"] = idx + 1
+        save_progress(user_id, progress)
+        bot.reply_to(message, "Excelente progresso! 🌟 Vamos para a próxima aula.")
+        show_lesson(message)
+    else:
+        bot.reply_to(message, "Você já chegou ao fim do curso! Que tal revisar o que aprendeu? 😊")
 
-@bot.message_handler(commands=["aula"])
-def aula(msg):
-    partes = msg.text.split()
-    if len(partes) < 2 or not partes[1].isdigit():
-        bot.send_message(msg.chat.id, "Use: /aula 1")
-        return
+@bot.message_handler(commands=['ajuda'])
+def help_command(message):
+    bot.reply_to(message, "Eu explico conceitos de programação de forma simples. Se tiver dúvidas, tente reler o exemplo prático da aula!")
 
-    n = int(partes[1])
-    if n not in AULAS:
-        bot.send_message(msg.chat.id, "Aula não encontrada.")
-        return
+# Fallback para mensagens de texto comuns
+@bot.message_handler(func=lambda message: True)
+def handle_all(message):
+    bot.reply_to(message, "Não entendi... 😅 Tente usar /menu para ver os comandos disponíveis.")
 
-    aula = AULAS[n]
-    progresso = carregar_progresso(msg.from_user.id)
-
-    if n not in progresso["aulas"]:
-        progresso["aulas"].append(n)
-        progresso["pontos"] += 10
-        salvar_progresso(msg.from_user.id, progresso)
-
-    bot.send_message(
-        msg.chat.id,
-        f"*{aula['titulo']}*\n\n{aula['conteudo']}\n\n"
-        f"📝 Exercício:\n_{aula['exercicio']}_"
-    )
-
-@bot.message_handler(commands=["desafio"])
-def desafio(msg):
-    texto = "*💪 Desafios:*\n\n"
-    for n, d in DESAFIOS.items():
-        texto += f"*{n}* - {d['titulo']}\n"
-    bot.send_message(msg.chat.id, texto)
-
-@bot.message_handler(commands=["executar"])
-def executar(msg):
-    codigo = msg.text.replace("/executar", "", 1).strip()
-    if not codigo:
-        bot.send_message(msg.chat.id, "Use: /executar print('Oi')")
-        return
-
-    ok, res = executar_codigo(codigo)
-    bot.send_message(
-        msg.chat.id,
-        f"```python\n{codigo}\n```\n\n📤 Resultado:\n```\n{res}\n```"
-    )
-
-@bot.message_handler(commands=["progresso"])
-def progresso(msg):
-    p = carregar_progresso(msg.from_user.id)
-    bot.send_message(
-        msg.chat.id,
-        f"📊 *Seu Progresso*\n\n"
-        f"Aulas: {len(p['aulas'])}\n"
-        f"Desafios: {len(p['desafios'])}\n"
-        f"Pontos: {p['pontos']}"
-    )
-
-# ================= START BOT =================
+# --- INICIALIZAÇÃO ---
 if __name__ == "__main__":
-    print("🤖 Bot Professor de Python rodando...")
-    bot.polling(none_stop=True)
+    print("Professor Virtual está online... (Aguardando conexões)")
+    # Non-stop polling para o bot não parar em caso de erro de conexão
+    bot.infinity_polling()
