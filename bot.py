@@ -10,7 +10,7 @@ import tempfile
 import sys
 
 # ================= CONFIG =================
-TOKEN = "SEU_TOKEN_AQUI"
+TOKEN = "8225873743:AAHyaQxuZWdFf094aNLW_4KPFqJn-gRnw9U"
 bot = telebot.TeleBot(TOKEN, parse_mode="Markdown")
 
 PASTA_DADOS = "dados"
