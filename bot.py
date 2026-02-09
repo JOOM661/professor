@@ -48,8 +48,9 @@ def home():
     """
 
 def run_flask():
-    # Roda o servidor na porta 8080 (padrão Replit)
-    app.run(host='0.0.0.0', port=8080)
+    # O Railway passa a porta correta pela variável de ambiente 'PORT'
+    port = int(os.environ.get("PORT", 8080))
+    app.run(host='0.0.0.0', port=port)
 
 # --- CURRÍCULO COMPLETO (50 AULAS) ---
 AULAS = [
